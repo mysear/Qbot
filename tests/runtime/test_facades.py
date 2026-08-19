@@ -95,12 +95,17 @@ def test_akshare_data_facade_exposes_market_metadata() -> None:
         def stock_tfp_em(self):
             return pd.DataFrame([{"代码": "600001", "停牌时间": "2026-01-02", "停牌截止时间": "2026-01-02", "停牌原因": "test"}])
 
+        def stock_zh_a_hist(self, **kwargs):
+            close = 5 if kwargs["adjust"] == "qfq" else 10
+            return pd.DataFrame([{"日期": "2026-01-02", "收盘": close}])
+
     provider = create_data_provider("qbot.akshare", {"client": Client(), "retry_delay": 0})
     instruments = provider.list_instruments()
     assert instruments[0]["symbol"] == "600001.SH"
     assert instruments[1]["exchange"] == "BJ" and instruments[1]["is_st"]
     assert len(provider.trading_calendar("SSE", "2026-01-01", "2026-01-31")) == 2
     assert provider.universe_members("HS300", "2026-01-02")[0]["symbol"] == "600001.SH"
+    assert provider.adjustment_factors(["600001.SH"], "2026-01-01", "2026-01-03")[0]["factor"] == .5
     assert provider.suspensions(["600001.SH"], "2026-01-01", "2026-01-03")[0]["reason"] == "test"
     assert provider.instrument_status_history(["830001.BJ"], "2026-01-01", "2026-01-31")[0]["is_st"]
     with pytest.raises(ValueError, match="historical index membership"):

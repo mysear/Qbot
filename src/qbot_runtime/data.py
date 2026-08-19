@@ -86,6 +86,20 @@ class UpstreamDataProvider:
         self._akshare()
         raise ValueError("AkShare does not provide authoritative historical index membership; use Tushare or Qlib")
 
+    def adjustment_factors(self, symbols: list[str], start: str, end: str) -> list[dict[str, Any]]:
+        ak = self._akshare(); result: list[dict[str, Any]] = []
+        for symbol in symbols:
+            code = symbol.split(".")[0]
+            options = {"symbol": code, "period": "daily", "start_date": start.replace("-", ""), "end_date": end.replace("-", "")}
+            raw = self._call(ak.stock_zh_a_hist, **options, adjust="")
+            adjusted = self._call(ak.stock_zh_a_hist, **options, adjust="qfq")
+            raw_by_date = {str(row["日期"])[:10]: float(row["收盘"]) for row in raw.to_dict("records")}
+            for row in adjusted.to_dict("records"):
+                trade_date = str(row["日期"])[:10]; raw_close = raw_by_date.get(trade_date, 0.0); adjusted_close = float(row["收盘"])
+                if raw_close > 0 and adjusted_close > 0:
+                    result.append({"symbol": symbol, "date": trade_date, "factor": adjusted_close / raw_close})
+        return result
+
     def suspensions(self, symbols: list[str], start: str, end: str) -> list[dict[str, Any]]:
         from datetime import date, timedelta
         frame = self._call(self._akshare().stock_tfp_em)
