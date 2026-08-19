@@ -7,6 +7,7 @@ from .strategies import StrategyRuntime, create_strategy
 from .backtest import BacktestRuntime, create_backtest_engine
 from .data import DataProvider, create_data_provider
 from .execution import ExecutionClient, create_execution_client
+from .factor_workflow import FactorMiningRuntime, create_factor_workflow
 from .schemas import BacktestResult, FeatureResult, ModelArtifact, OrderResult, PredictionResult, StrategyResult, TrainingResult
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "FeatureRuntime", "StrategyRuntime", "BacktestRuntime", "DataProvider", "ExecutionClient",
     "capabilities", "create_model", "load_model", "create_feature", "create_strategy",
     "create_backtest_engine", "create_data_provider", "create_execution_client",
+    "FactorMiningRuntime", "create_factor_workflow",
 ]
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"

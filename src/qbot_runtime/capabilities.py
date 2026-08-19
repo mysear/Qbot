@@ -6,7 +6,7 @@ from importlib.util import find_spec
 from typing import Any
 
 
-RUNTIME_VERSION = "0.3.1"
+RUNTIME_VERSION = "0.4.0"
 QBOT_REVISION = "f0425ae4ae8bd02b79656b8f7039f4cd6874095e"
 
 
@@ -108,13 +108,17 @@ def capabilities() -> CapabilityManifest:
         _model("qbot.transformer", "torch", ("regression", "classification")),
         _model("qbot.tft", "torch", ("regression", "classification")),
         _capability("qbot.ta", "feature"),
-        _capability("qbot.ma", "strategy"),
-        _capability("qbot.momentum", "strategy"),
-        _capability("qbot.multi_factor", "strategy"),
-        _capability("qbot.vector_backtest", "backtest"),
-        _capability("qbot.backtrader", "backtest", "backtrader"),
+        _capability("qbot.ma", "strategy", markets=("a_share","crypto","fund","futures")),
+        _capability("qbot.momentum", "strategy", markets=("a_share","crypto","fund","futures")),
+        _capability("qbot.multi_factor", "strategy", markets=("a_share","crypto","fund","futures")),
+        _capability("qbot.q_learning", "strategy", markets=("a_share","crypto","fund","futures"), config_schema={"type":"object","properties":{"episodes":{"type":"integer","minimum":1},"random_state":{"type":"integer"}},"additionalProperties":True}),
+        _capability("qbot.factor_mining", "factor_workflow", markets=("a_share","crypto","fund","futures"), config_schema={"type":"object","properties":{"windows":{"type":"array","items":{"type":"integer","minimum":2}},"horizon":{"type":"integer","minimum":1}},"additionalProperties":False}),
+        _capability("qbot.vector_backtest", "backtest", markets=("a_share","crypto","fund","futures")),
+        _capability("qbot.backtrader", "backtest", "backtrader", markets=("a_share","crypto","fund","futures")),
         _capability("qbot.akshare", "data", "akshare", markets=("a_share",)),
         _capability("qbot.yfinance", "data", "yfinance"),
+        _capability("qbot.fund_yfinance", "data", "yfinance", markets=("fund",)),
+        _capability("qbot.futures_yfinance", "data", "yfinance", markets=("futures",)),
         _capability("qbot.efinance", "data", "efinance", markets=("a_share",)),
         _capability("qbot.paper", "execution"),
     )

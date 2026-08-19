@@ -16,7 +16,7 @@ class UpstreamDataProvider:
         self.config = dict(config or {})
 
     def history(self, symbol: str, start: str, end: str, interval: str = "1d") -> list[dict[str, Any]]:
-        if self.capability_id == "qbot.yfinance":
+        if self.capability_id in {"qbot.yfinance", "qbot.fund_yfinance", "qbot.futures_yfinance"}:
             import yfinance as yf
             frame = yf.download(symbol, start=start, end=end, interval=interval, auto_adjust=False, progress=False)
         elif self.capability_id == "qbot.akshare":
@@ -33,7 +33,7 @@ class UpstreamDataProvider:
 
 
 def create_data_provider(capability_id: str, config: dict[str, Any] | None = None) -> UpstreamDataProvider:
-    if capability_id not in {"qbot.yfinance", "qbot.akshare", "qbot.efinance"}:
+    if capability_id not in {"qbot.yfinance", "qbot.fund_yfinance", "qbot.futures_yfinance", "qbot.akshare", "qbot.efinance"}:
         raise ValueError(f"Unknown Qbot data provider: {capability_id}")
     return UpstreamDataProvider(capability_id, config)
 

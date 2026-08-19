@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from qbot_runtime import create_backtest_engine, create_execution_client, create_feature, create_strategy
+from qbot_runtime import create_backtest_engine, create_execution_client, create_factor_workflow, create_feature, create_strategy
 
 
 def bars(count: int = 30) -> list[dict[str, float]]:
@@ -47,3 +47,23 @@ def test_paper_execution_is_idempotent() -> None:
     client = create_execution_client("qbot.paper")
     intent = {"symbol":"600001.SH", "side":"buy", "quantity":100, "idempotency_key":"task-1"}
     assert client.submit(intent).order_id == client.submit(intent).order_id
+
+
+def test_q_learning_round_trip_is_reproducible(tmp_path) -> None:
+    runtime = create_strategy("qbot.q_learning", {"episodes": 10, "random_state": 7})
+    runtime.fit(bars())
+    before = runtime.generate(bars())
+    artifact = runtime.save(tmp_path / "q-learning.json")
+    loaded = type(runtime).load(artifact["artifact_uri"], artifact["artifact_sha256"])
+    assert loaded.generate(bars()) == before
+
+
+def test_factor_mining_returns_ranked_candidates() -> None:
+    result = create_factor_workflow("qbot.factor_mining", {"windows": [3, 5]}).run(bars())
+    assert len(result["factors"]) == 6
+    assert {"factor_id", "rank_ic", "sample_count"} <= result["factors"][0].keys()
+
+
+def test_factor_mining_rejects_invalid_windows() -> None:
+    with pytest.raises(ValueError, match="windows"):
+        create_factor_workflow("qbot.factor_mining", {"windows": [1]}).run(bars())

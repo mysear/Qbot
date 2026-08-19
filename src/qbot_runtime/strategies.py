@@ -38,6 +38,10 @@ class SignalStrategyRuntime:
 
 
 def create_strategy(capability_id: str, config: dict[str, Any] | None = None) -> SignalStrategyRuntime:
+    if capability_id == "qbot.q_learning":
+        from .ai_strategies import QLearningStrategyRuntime
+
+        return QLearningStrategyRuntime(config)
     if capability_id not in {"qbot.ma", "qbot.momentum", "qbot.multi_factor"}:
         raise ValueError(f"Unknown Qbot strategy capability: {capability_id}")
     return SignalStrategyRuntime(capability_id, config)
