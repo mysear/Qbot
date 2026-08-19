@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from qbot_runtime import create_backtest_engine, create_execution_client, create_factor_workflow, create_feature, create_strategy
+from qbot_runtime import create_backtest_engine, create_data_provider, create_execution_client, create_factor_workflow, create_feature, create_strategy
 
 
 def bars(count: int = 30) -> list[dict[str, float]]:
@@ -67,3 +67,12 @@ def test_factor_mining_returns_ranked_candidates() -> None:
 def test_factor_mining_rejects_invalid_windows() -> None:
     with pytest.raises(ValueError, match="windows"):
         create_factor_workflow("qbot.factor_mining", {"windows": [1]}).run(bars())
+
+
+def test_binance_data_facade_normalizes_paginated_klines() -> None:
+    import httpx
+    payload = [[1, "100", "101", "99", "100.5", "10", 2, "1000", 5, "6", "600", "0"]]
+    client = httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(200, json=payload)))
+    provider = create_data_provider("qbot.binance", {"http_client": client})
+    rows = provider.klines("BTCUSDT", "15m", limit=1)
+    assert rows == [{"open_time": 1, "open": 100.0, "high": 101.0, "low": 99.0, "close": 100.5, "volume": 10.0, "amount": 1000.0, "trade_count": 5, "taker_buy_volume": 6.0, "taker_buy_amount": 600.0}]

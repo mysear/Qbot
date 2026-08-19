@@ -4,7 +4,7 @@ from qbot_runtime import capabilities
 def test_manifest_only_advertises_stable_runtime_capabilities() -> None:
     manifest = capabilities()
 
-    assert manifest.runtime_version == "0.4.1"
+    assert manifest.runtime_version == "0.4.2"
     assert len(manifest.qbot_revision) == 40
     assert {item.id for item in manifest.capabilities} >= {
         "qbot.linear_regression",

@@ -6,7 +6,7 @@ from importlib.util import find_spec
 from typing import Any
 
 
-RUNTIME_VERSION = "0.4.1"
+RUNTIME_VERSION = "0.4.2"
 QBOT_REVISION = "f0425ae4ae8bd02b79656b8f7039f4cd6874095e"
 
 
@@ -115,6 +115,7 @@ def capabilities() -> CapabilityManifest:
         _capability("qbot.factor_mining", "factor_workflow", markets=("a_share","crypto","fund","futures"), config_schema={"type":"object","properties":{"windows":{"type":"array","items":{"type":"integer","minimum":2}},"horizon":{"type":"integer","minimum":1}},"additionalProperties":False}),
         _capability("qbot.vector_backtest", "backtest", markets=("a_share","crypto","fund","futures")),
         _capability("qbot.backtrader", "backtest", "backtrader", markets=("a_share","crypto","fund","futures")),
+        _capability("qbot.binance", "data", "httpx", markets=("crypto",)),
         _capability("qbot.akshare", "data", "akshare", markets=("a_share",)),
         _capability("qbot.yfinance", "data", "yfinance"),
         _capability("qbot.fund_yfinance", "data", "yfinance", markets=("fund",)),
