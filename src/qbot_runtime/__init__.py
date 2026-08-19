@@ -19,4 +19,4 @@ __all__ = [
     "FactorMiningRuntime", "create_factor_workflow",
 ]
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
