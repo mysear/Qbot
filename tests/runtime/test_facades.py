@@ -76,3 +76,32 @@ def test_binance_data_facade_normalizes_paginated_klines() -> None:
     provider = create_data_provider("qbot.binance", {"http_client": client})
     rows = provider.klines("BTCUSDT", "15m", limit=1)
     assert rows == [{"open_time": 1, "open": 100.0, "high": 101.0, "low": 99.0, "close": 100.5, "volume": 10.0, "amount": 1000.0, "trade_count": 5, "taker_buy_volume": 6.0, "taker_buy_amount": 600.0}]
+
+
+def test_akshare_data_facade_exposes_market_metadata() -> None:
+    import pandas as pd
+
+    class Client:
+        def stock_info_a_code_name(self):
+            return pd.DataFrame([{"code": "600001", "name": "Example"}, {"code": "830001", "name": "ST Sample"}])
+
+        def tool_trade_date_hist_sina(self):
+            return pd.DataFrame({"trade_date": ["2026-01-02", "2026-01-05"]})
+
+        def index_stock_cons(self, symbol):
+            assert symbol == "000300"
+            return pd.DataFrame([{"品种代码": "600001"}])
+
+        def stock_tfp_em(self):
+            return pd.DataFrame([{"代码": "600001", "停牌时间": "2026-01-02", "停牌截止时间": "2026-01-02", "停牌原因": "test"}])
+
+    provider = create_data_provider("qbot.akshare", {"client": Client(), "retry_delay": 0})
+    instruments = provider.list_instruments()
+    assert instruments[0]["symbol"] == "600001.SH"
+    assert instruments[1]["exchange"] == "BJ" and instruments[1]["is_st"]
+    assert len(provider.trading_calendar("SSE", "2026-01-01", "2026-01-31")) == 2
+    assert provider.universe_members("HS300", "2026-01-02")[0]["symbol"] == "600001.SH"
+    assert provider.suspensions(["600001.SH"], "2026-01-01", "2026-01-03")[0]["reason"] == "test"
+    assert provider.instrument_status_history(["830001.BJ"], "2026-01-01", "2026-01-31")[0]["is_st"]
+    with pytest.raises(ValueError, match="historical index membership"):
+        provider.universe_history("HS300", "2025-01-01", "2026-01-01")
