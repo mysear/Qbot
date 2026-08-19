@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from importlib import import_module
 from importlib.util import find_spec
 from typing import Any
 
@@ -44,7 +45,7 @@ class CapabilityManifest:
 
 
 def _model(capability_id: str, dependency: str, tasks: tuple[str, ...]) -> Capability:
-    available = find_spec(dependency) is not None
+    available, reason = _dependency_state(dependency)
     return Capability(
         id=capability_id,
         kind="model",
@@ -52,18 +53,30 @@ def _model(capability_id: str, dependency: str, tasks: tuple[str, ...]) -> Capab
         tasks=tasks,
         dependency=dependency,
         available=available,
-        unavailable_reason=None if available else f"Install the optional dependency providing {dependency}",
+        unavailable_reason=reason,
         supports_fit=True,
         supports_batch_predict=True,
     )
 
 
 def _capability(capability_id: str, kind: str, dependency: str = "", *, markets: tuple[str, ...] = ("a_share", "crypto"), tasks: tuple[str, ...] = ()) -> Capability:
-    available = not dependency or find_spec(dependency) is not None
+    available, reason = _dependency_state(dependency)
     return Capability(
         capability_id, kind, markets, tasks, dependency, available,
-        None if available else f"Install the optional dependency providing {dependency}",
+        reason,
     )
+
+
+def _dependency_state(dependency: str) -> tuple[bool, str | None]:
+    if not dependency:
+        return True, None
+    if find_spec(dependency) is None:
+        return False, f"Install the optional dependency providing {dependency}"
+    try:
+        import_module(dependency)
+    except Exception as exc:
+        return False, f"Cannot import optional dependency {dependency}: {exc}"
+    return True, None
 
 
 def capabilities() -> CapabilityManifest:
