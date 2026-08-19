@@ -31,9 +31,16 @@ jobs:
         pip install pylint isort black flake8
 
     - name: Format check
-      run: |
-        ./.github/scripts/format_check.sh
       shell: bash
+      run: |
+        files=$(git diff --name-only HEAD~1..HEAD -- '*.py')
+        if [[ -z "$files" ]]; then
+          echo "No Python files changed; format check passed."
+          exit 0
+        fi
+        black --check $files
+        isort --check-only $files
+        flake8 $files
 
     # - name: Analysing the code with pylint
     #   run: |
