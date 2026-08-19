@@ -24,3 +24,30 @@ class PredictionResult:
     values: list[float]
     probabilities: list[float] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class FeatureResult:
+    rows: list[dict[str, Any]]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class StrategyResult:
+    signals: list[dict[str, Any]]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class BacktestResult:
+    metrics: dict[str, float]
+    equity_curve: list[dict[str, Any]]
+    trades: list[dict[str, Any]]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class OrderResult:
+    order_id: str
+    status: str
+    metadata: dict[str, Any] = field(default_factory=dict)

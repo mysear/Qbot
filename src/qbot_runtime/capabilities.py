@@ -5,7 +5,7 @@ from importlib.util import find_spec
 from typing import Any
 
 
-RUNTIME_VERSION = "0.1.0"
+RUNTIME_VERSION = "0.2.0"
 QBOT_REVISION = "f0425ae4ae8bd02b79656b8f7039f4cd6874095e"
 
 
@@ -20,6 +20,7 @@ class Capability:
     unavailable_reason: str | None = None
     supports_fit: bool = False
     supports_batch_predict: bool = False
+    config_schema: dict[str, Any] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         result = asdict(self)
@@ -57,6 +58,14 @@ def _model(capability_id: str, dependency: str, tasks: tuple[str, ...]) -> Capab
     )
 
 
+def _capability(capability_id: str, kind: str, dependency: str = "", *, markets: tuple[str, ...] = ("a_share", "crypto"), tasks: tuple[str, ...] = ()) -> Capability:
+    available = not dependency or find_spec(dependency) is not None
+    return Capability(
+        capability_id, kind, markets, tasks, dependency, available,
+        None if available else f"Install the optional dependency providing {dependency}",
+    )
+
+
 def capabilities() -> CapabilityManifest:
     """Return only facade capabilities with implemented stable contracts."""
     items = (
@@ -67,5 +76,22 @@ def capabilities() -> CapabilityManifest:
         _model("qbot.lightgbm", "lightgbm", ("regression", "classification")),
         _model("qbot.xgboost", "xgboost", ("regression", "classification")),
         _model("qbot.catboost", "catboost", ("regression", "classification")),
+        _model("qbot.mlp", "torch", ("regression", "classification")),
+        _model("qbot.lstm", "torch", ("regression", "classification")),
+        _model("qbot.gru", "torch", ("regression", "classification")),
+        _model("qbot.transformer", "torch", ("regression", "classification")),
+        _model("qbot.tft", "torch", ("regression", "classification")),
+        _capability("qbot.ta", "feature"),
+        _capability("qbot.alpha101", "feature"),
+        _capability("qbot.alpha191", "feature"),
+        _capability("qbot.ma", "strategy"),
+        _capability("qbot.momentum", "strategy"),
+        _capability("qbot.multi_factor", "strategy"),
+        _capability("qbot.vector_backtest", "backtest"),
+        _capability("qbot.backtrader", "backtest", "backtrader"),
+        _capability("qbot.akshare", "data", "akshare", markets=("a_share",)),
+        _capability("qbot.yfinance", "data", "yfinance"),
+        _capability("qbot.efinance", "data", "efinance", markets=("a_share",)),
+        _capability("qbot.paper", "execution"),
     )
     return CapabilityManifest(RUNTIME_VERSION, QBOT_REVISION, items)
