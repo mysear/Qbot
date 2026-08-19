@@ -6,7 +6,7 @@ from importlib.util import find_spec
 from typing import Any
 
 
-RUNTIME_VERSION = "0.3.0"
+RUNTIME_VERSION = "0.3.1"
 QBOT_REVISION = "f0425ae4ae8bd02b79656b8f7039f4cd6874095e"
 
 
@@ -108,8 +108,6 @@ def capabilities() -> CapabilityManifest:
         _model("qbot.transformer", "torch", ("regression", "classification")),
         _model("qbot.tft", "torch", ("regression", "classification")),
         _capability("qbot.ta", "feature"),
-        _capability("qbot.alpha101", "feature", maturity="partial", config_schema={"type":"object","properties":{"implemented_factors":{"const":10}},"additionalProperties":False}),
-        _capability("qbot.alpha191", "feature", maturity="partial", config_schema={"type":"object","properties":{"implemented_factors":{"const":10}},"additionalProperties":False}),
         _capability("qbot.ma", "strategy"),
         _capability("qbot.momentum", "strategy"),
         _capability("qbot.multi_factor", "strategy"),

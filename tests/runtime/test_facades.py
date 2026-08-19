@@ -9,12 +9,17 @@ def bars(count: int = 30) -> list[dict[str, float]]:
     return [{"open": 10+i*.1, "high": 10.2+i*.1, "low": 9.8+i*.1, "close": 10.1+i*.1, "volume": 1000+i*10, "amount": (10.1+i*.1)*(1000+i*10)} for i in range(count)]
 
 
-@pytest.mark.parametrize("capability", ["qbot.ta", "qbot.alpha101", "qbot.alpha191"])
-def test_feature_facades_are_finite(capability: str) -> None:
-    output = create_feature(capability).transform(bars())
+def test_feature_facade_is_finite() -> None:
+    output = create_feature("qbot.ta").transform(bars())
     assert len(output) == 30
     assert output[-1]
     assert all(value == value and abs(value) != float("inf") for row in output for value in row.values())
+
+
+def test_unimplemented_alpha_libraries_are_not_advertised() -> None:
+    for capability in ("qbot.alpha101", "qbot.alpha191"):
+        with pytest.raises(ValueError, match="Unknown Qbot feature capability"):
+            create_feature(capability)
 
 
 @pytest.mark.parametrize("capability", ["qbot.ma", "qbot.momentum", "qbot.multi_factor"])
