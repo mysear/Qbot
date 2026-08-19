@@ -1,7 +1,7 @@
 # Install
 Qbot is a python package, so you need to install python first. We recommend you to use Anaconda to install python and other packages.
 
-- <b>Qbot 目前仅在 python3.8 pyhont3.9 下测试过，其他版本未测试。</b>
+- <b>Qbot 当前统一使用 Python 3.11 构建和测试。</b>
 - <b>Qbot 倡导每个交易员都应搭建属于自己的交易系统；所以我们源代码交付；</b>
 - <b>Qbot 支持非商业用途的二次开发；</b>
 - <b>[Qbot 用户协议](docs/Qbot用户协议)；</b>

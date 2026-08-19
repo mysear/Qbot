@@ -15,7 +15,7 @@
 [![AutoTrade](https://github.com/UFund-Me/Qbot/actions/workflows/auto-trade.yml/badge.svg)](https://github.com/UFund-Me/Qbot/actions/workflows/auto-trade.yml)
 [![Pylint](https://github.com/UFund-Me/Qbot/actions/workflows/pylint.yml/badge.svg)](https://github.com/UFund-Me/Qbot/actions/workflows/pylint.yml)
 [![Coverage](https://github.com/UFund-Me/Qbot/actions/workflows/coverage.yml/badge.svg)](https://github.com/UFund-Me/Qbot/actions/workflows/coverage.yml)
-<a href="https://github.com/UFund-Me/Qbot"><img src="https://img.shields.io/badge/Python-%203.8|%203.9-000000.svg?logo=Python&color=blue" alt="Python version"></a>
+<a href="https://github.com/UFund-Me/Qbot"><img src="https://img.shields.io/badge/Python-%203.11-000000.svg?logo=Python&color=blue" alt="Python version"></a>
 <a href="https://ufund-me.github.io/Qbot/#/"><img src="https://readthedocs.org/projects/pyod/badge/?version=latest" alt="Documentation status"></a>
 <a href="https://deepwiki.com/UFund-Me/Qbot"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 
@@ -83,7 +83,7 @@ Qbot是一个免费的量化投研平台，提供从数据获取、交易策略�
 
 但本项目可能需要一点点python基础知识，有一点点交易经验，会更容易体会作者的初衷，解决当下产品空缺和广大散户朋友的交易痛点，现在直接免费开源出来！
 
-<b>Qbot 目前仅在 python3.8 pyhont3.9 下测试过，其他版本未测试。</b>
+<b>Qbot 当前统一使用 Python 3.11 构建和测试。</b>
 
 <<< 详细文档 [docs/Install_guide.md](docs/Install_guide.md)
 
