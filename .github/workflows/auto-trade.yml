@@ -49,15 +49,24 @@ jobs:
         shell: bash
 
       - name: 'Sending SMS Notification'
-        uses: plivo/action-sms@v1
-        with:
-          fromPhoneNumber: ${{ secrets.FROM_NUMBER }}
-          toPhoneNumber: ${{ secrets.TO_NUMBER }}
-          message: '💡There has been new release to ${{ github.repository }}'
         env:
           PLIVO_AUTH_ID: ${{ secrets.PLIVO_AUTH_ID }}
           PLIVO_AUTH_TOKEN: ${{ secrets.PLIVO_AUTH_TOKEN }}
-  
+          FROM_NUMBER: ${{ secrets.FROM_NUMBER }}
+          TO_NUMBER: ${{ secrets.TO_NUMBER }}
+        run: |
+          if [[ -z "$PLIVO_AUTH_ID" || -z "$PLIVO_AUTH_TOKEN" || -z "$FROM_NUMBER" || -z "$TO_NUMBER" ]]; then
+            echo "Plivo SMS secrets are not configured; skipping notification."
+            exit 0
+          fi
+          curl --fail --silent --show-error \
+            --user "$PLIVO_AUTH_ID:$PLIVO_AUTH_TOKEN" \
+            --request POST \
+            "https://api.plivo.com/v1/Account/$PLIVO_AUTH_ID/Message/" \
+            --data-urlencode "src=$FROM_NUMBER" \
+            --data-urlencode "dst=$TO_NUMBER" \
+            --data-urlencode "text=There has been new release to ${{ github.repository }}"
+
   # updates:
   #   name: 'Update annual national holiday'
   #   runs-on: ubuntu-latest
