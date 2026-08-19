@@ -6,7 +6,7 @@ from importlib.util import find_spec
 from typing import Any
 
 
-RUNTIME_VERSION = "0.2.0"
+RUNTIME_VERSION = "0.3.0"
 QBOT_REVISION = "f0425ae4ae8bd02b79656b8f7039f4cd6874095e"
 
 
@@ -22,11 +22,20 @@ class Capability:
     supports_fit: bool = False
     supports_batch_predict: bool = False
     config_schema: dict[str, Any] | None = None
+    display_name: str = ""
+    timeframes: tuple[str, ...] = ()
+    horizons: tuple[int, ...] = ()
+    supports_evaluate: bool = False
+    devices: tuple[str, ...] = ("cpu",)
+    maturity: str = "stable"
 
     def as_dict(self) -> dict[str, Any]:
         result = asdict(self)
         result["markets"] = list(self.markets)
         result["tasks"] = list(self.tasks)
+        result["timeframes"] = list(self.timeframes)
+        result["horizons"] = list(self.horizons)
+        result["devices"] = list(self.devices)
         return result
 
 
@@ -56,14 +65,18 @@ def _model(capability_id: str, dependency: str, tasks: tuple[str, ...]) -> Capab
         unavailable_reason=reason,
         supports_fit=True,
         supports_batch_predict=True,
+        supports_evaluate=True,
+        display_name=capability_id.removeprefix("qbot.").replace("_", " ").title(),
+        timeframes=("1m", "5m", "15m", "1h", "4h", "1d"),
+        config_schema={"type": "object", "additionalProperties": True},
     )
 
 
-def _capability(capability_id: str, kind: str, dependency: str = "", *, markets: tuple[str, ...] = ("a_share", "crypto"), tasks: tuple[str, ...] = ()) -> Capability:
+def _capability(capability_id: str, kind: str, dependency: str = "", *, markets: tuple[str, ...] = ("a_share", "crypto"), tasks: tuple[str, ...] = (), maturity: str = "stable", config_schema: dict[str, Any] | None = None) -> Capability:
     available, reason = _dependency_state(dependency)
     return Capability(
         capability_id, kind, markets, tasks, dependency, available,
-        reason,
+        reason, config_schema=config_schema, display_name=capability_id.removeprefix("qbot.").replace("_", " ").title(), maturity=maturity,
     )
 
 
@@ -95,8 +108,8 @@ def capabilities() -> CapabilityManifest:
         _model("qbot.transformer", "torch", ("regression", "classification")),
         _model("qbot.tft", "torch", ("regression", "classification")),
         _capability("qbot.ta", "feature"),
-        _capability("qbot.alpha101", "feature"),
-        _capability("qbot.alpha191", "feature"),
+        _capability("qbot.alpha101", "feature", maturity="partial", config_schema={"type":"object","properties":{"implemented_factors":{"const":10}},"additionalProperties":False}),
+        _capability("qbot.alpha191", "feature", maturity="partial", config_schema={"type":"object","properties":{"implemented_factors":{"const":10}},"additionalProperties":False}),
         _capability("qbot.ma", "strategy"),
         _capability("qbot.momentum", "strategy"),
         _capability("qbot.multi_factor", "strategy"),

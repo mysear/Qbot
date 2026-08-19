@@ -31,6 +31,13 @@ def test_vector_backtest_returns_standard_report() -> None:
     assert len(report.equity_curve) == len(rows)
 
 
+def test_backtrader_facade_uses_backtrader_engine() -> None:
+    pytest.importorskip("backtrader")
+    rows = bars(); signals = create_strategy("qbot.ma").generate(rows)
+    report = create_backtest_engine("qbot.backtrader").run(rows, signals)
+    assert report.config["engine"] == "qbot.backtrader"
+
+
 def test_paper_execution_is_idempotent() -> None:
     client = create_execution_client("qbot.paper")
     intent = {"symbol":"600001.SH", "side":"buy", "quantity":100, "idempotency_key":"task-1"}

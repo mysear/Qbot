@@ -34,10 +34,50 @@ class VectorBacktestRuntime:
         return BacktestResult({"total_return": float(equity.iloc[-1]/initial-1), "max_drawdown": float(drawdown.min()), "sharpe": annualized, "trade_count": float(len(trades))}, curve, trades, {"engine": self.capability_id, "fee_rate": fee})
 
 
-def create_backtest_engine(capability_id: str, config: dict[str, Any] | None = None) -> VectorBacktestRuntime:
+class BacktraderRuntime:
+    """Run externally generated target weights through Backtrader's broker."""
+
+    capability_id = "qbot.backtrader"
+
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
+        self.config = dict(config or {})
+
+    def run(self, rows: Sequence[dict[str, Any]], signals: Sequence[dict[str, Any]]) -> BacktestResult:
+        import backtrader as bt
+        frame = pd.DataFrame(rows).copy()
+        if frame.empty or "close" not in frame or len(frame) != len(signals):
+            raise ValueError("Backtest requires one signal per non-empty close row")
+        for name in ("open", "high", "low"):
+            if name not in frame: frame[name] = frame["close"]
+        if "volume" not in frame: frame["volume"] = 0.0
+        frame.index = pd.date_range("2000-01-01", periods=len(frame), freq="D")
+        targets = [float(item.get("target_weight", item.get("signal", 0))) for item in signals]
+        curve: list[dict[str, float | int]] = []
+        trades: list[dict[str, float | int]] = []
+
+        class TargetStrategy(bt.Strategy):
+            def next(self) -> None:
+                index = len(self) - 1
+                target = max(-1.0, min(1.0, targets[index]))
+                previous = float(self.position.size)
+                self.order_target_percent(target=target)
+                if target != previous: trades.append({"index": index, "target_weight": target})
+                curve.append({"index": index, "equity": float(self.broker.getvalue()), "return": 0.0})
+
+        initial = float(self.config.get("initial_capital", 100000.0))
+        cerebro = bt.Cerebro(stdstats=False); cerebro.broker.setcash(initial)
+        cerebro.broker.setcommission(commission=float(self.config.get("fee_rate", 0.001)))
+        cerebro.adddata(bt.feeds.PandasData(dataname=frame)); cerebro.addstrategy(TargetStrategy); cerebro.run()
+        values = pd.Series([float(item["equity"]) for item in curve] or [initial]); returns = values.pct_change().fillna(0)
+        drawdown = values / values.cummax() - 1; std = float(returns.std(ddof=0))
+        return BacktestResult({"total_return": float(values.iloc[-1]/initial-1), "max_drawdown": float(drawdown.min()), "sharpe": float(returns.mean()/std*np.sqrt(252)) if std else 0.0, "trade_count": float(len(trades))}, curve, trades, {"engine": self.capability_id, "fee_rate": float(self.config.get("fee_rate", .001))})
+
+
+def create_backtest_engine(capability_id: str, config: dict[str, Any] | None = None) -> BacktestRuntime:
     if capability_id not in {"qbot.vector_backtest", "qbot.backtrader"}:
         raise ValueError(f"Unknown Qbot backtest capability: {capability_id}")
     if capability_id == "qbot.backtrader":
         try: import backtrader  # noqa: F401
         except ImportError as exc: raise RuntimeError("Install Qbot with the backtest extra") from exc
+        return BacktraderRuntime(config)
     return VectorBacktestRuntime(capability_id, config)

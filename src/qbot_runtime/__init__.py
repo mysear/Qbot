@@ -17,4 +17,4 @@ __all__ = [
     "create_backtest_engine", "create_data_provider", "create_execution_client",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

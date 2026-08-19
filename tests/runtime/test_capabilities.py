@@ -4,7 +4,7 @@ from qbot_runtime import capabilities
 def test_manifest_only_advertises_stable_runtime_capabilities() -> None:
     manifest = capabilities()
 
-    assert manifest.runtime_version == "0.2.0"
+    assert manifest.runtime_version == "0.3.0"
     assert len(manifest.qbot_revision) == 40
     assert {item.id for item in manifest.capabilities} >= {
         "qbot.linear_regression",
@@ -15,6 +15,8 @@ def test_manifest_only_advertises_stable_runtime_capabilities() -> None:
     models = [item for item in manifest.capabilities if item.kind == "model"]
     assert all(item.supports_fit and item.supports_batch_predict for item in models)
     assert {item.kind for item in manifest.capabilities} >= {"model", "feature", "strategy", "backtest", "data", "execution"}
+    assert all(item.display_name and item.config_schema is not None for item in models)
+    assert next(item for item in manifest.capabilities if item.id == "qbot.alpha101").maturity == "partial"
 
 
 def test_optional_dependency_state_is_exposed() -> None:
