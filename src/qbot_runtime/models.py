@@ -152,13 +152,19 @@ class TorchModelRuntime:
                 if kind == "qbot.mlp": self.network=nn.Sequential(nn.Linear(self_outer.feature_count,hidden),nn.ReLU(),nn.Linear(hidden,1))
                 elif kind in {"qbot.lstm","qbot.gru"}:
                     recurrent=nn.LSTM if kind=="qbot.lstm" else nn.GRU; self.network=recurrent(1,hidden,layers,batch_first=True); self.head=nn.Linear(hidden,1)
-                else:
+                elif kind == "qbot.transformer":
                     self.project=nn.Linear(1,hidden); encoder=nn.TransformerEncoderLayer(hidden,int(self_outer.config.get("heads",2)),hidden*2,batch_first=True,dropout=0); self.network=nn.TransformerEncoder(encoder,layers); self.head=nn.Linear(hidden,1)
+                else:
+                    self.project=nn.Linear(1,hidden); self.network=nn.LSTM(hidden,hidden,layers,batch_first=True)
+                    self.gate=nn.Linear(hidden,hidden); self.skip=nn.Linear(hidden,hidden); self.norm=nn.LayerNorm(hidden); self.head=nn.Linear(hidden,1)
             def forward(self, x: Any) -> Any:
                 if self.kind=="qbot.mlp": return self.network(x).squeeze(-1)
                 sequence=x.unsqueeze(-1)
                 if self.kind in {"qbot.lstm","qbot.gru"}: encoded,_=self.network(sequence)
-                else: encoded=self.network(self.project(sequence))
+                elif self.kind=="qbot.transformer": encoded=self.network(self.project(sequence))
+                else:
+                    projected=self.project(sequence); encoded,_=self.network(projected)
+                    encoded=self.norm(self.skip(projected)+torch.sigmoid(self.gate(encoded))*encoded)
                 return self.head(encoded[:,-1]).squeeze(-1)
         self_outer=self
         torch.manual_seed(int(self.config.get("random_state",42)))
