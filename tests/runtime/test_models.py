@@ -16,6 +16,7 @@ def test_regression_model_round_trip(tmp_path) -> None:
     assert prediction.values == pytest.approx([7.0, 9.0])
     assert prediction.probabilities is None
     assert prediction.metadata["provider"] == "qbot"
+    assert loaded.evaluate([[0.0], [1.0], [2.0]], [1.0, 3.0, 5.0])["r2"] == pytest.approx(1.0)
 
 
 def test_classification_model_returns_positive_probabilities(tmp_path) -> None:
@@ -26,6 +27,7 @@ def test_classification_model_returns_positive_probabilities(tmp_path) -> None:
 
     assert prediction.probabilities is not None
     assert all(0.0 <= value <= 1.0 for value in prediction.probabilities)
+    assert model.evaluate([[0.0], [1.0], [2.0], [3.0]], [0, 0, 1, 1])["accuracy"] >= 0.5
 
 
 def test_model_rejects_feature_shape_change(tmp_path) -> None:

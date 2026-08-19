@@ -6,7 +6,7 @@ from importlib.util import find_spec
 from typing import Any
 
 
-RUNTIME_VERSION = "0.4.0"
+RUNTIME_VERSION = "0.4.1"
 QBOT_REVISION = "f0425ae4ae8bd02b79656b8f7039f4cd6874095e"
 
 

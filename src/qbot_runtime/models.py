@@ -17,6 +17,7 @@ class ModelRuntime(Protocol):
 
     def fit(self, features: Sequence[Sequence[float]], targets: Sequence[float], output_uri: str | Path) -> TrainingResult: ...
     def predict_batch(self, features: Sequence[Sequence[float]]) -> PredictionResult: ...
+    def evaluate(self, features: Sequence[Sequence[float]], targets: Sequence[float]) -> dict[str, float]: ...
     def save(self, output_uri: str | Path) -> ModelArtifact: ...
 
 
@@ -52,6 +53,9 @@ class SklearnCompatibleModelRuntime:
         values = np.asarray(self.estimator.predict(matrix), dtype=float).tolist()
         probabilities = _positive_probabilities(self.estimator, matrix) if self.task == "classification" else None
         return PredictionResult(values, probabilities, self._metadata())
+
+    def evaluate(self, features: Sequence[Sequence[float]], targets: Sequence[float]) -> dict[str, float]:
+        return _evaluation_metrics(self.task, targets, self.predict_batch(features).values)
 
     def save(self, output_uri: str | Path) -> ModelArtifact:
         if self.feature_count is None:
@@ -190,6 +194,11 @@ class TorchModelRuntime:
         values=(probabilities if probabilities is not None else raw).tolist()
         return PredictionResult([float(v) for v in values],None if probabilities is None else [float(v) for v in probabilities.tolist()],self._metadata())
 
+    def evaluate(self, features: Sequence[Sequence[float]], targets: Sequence[float]) -> dict[str, float]:
+        prediction = self.predict_batch(features)
+        values = [float(value >= 0.5) for value in prediction.values] if self.task == "classification" else prediction.values
+        return _evaluation_metrics(self.task, targets, values)
+
     def save(self, output_uri: str | Path) -> ModelArtifact:
         if self.model is None or self.feature_count is None: raise RuntimeError("model must be fitted before it can be saved")
         import torch
@@ -218,6 +227,16 @@ def _positive_probabilities(estimator: Any, matrix: np.ndarray) -> list[float] |
     if probabilities.ndim != 2 or probabilities.shape[1] < 2:
         return None
     return probabilities[:, -1].tolist()
+
+
+def _evaluation_metrics(task: str, targets: Sequence[float], predictions: Sequence[float]) -> dict[str, float]:
+    if len(targets) != len(predictions) or not targets:
+        raise ValueError("evaluation targets and predictions must have the same non-zero length")
+    if task == "classification":
+        from sklearn.metrics import accuracy_score, f1_score
+        return {"accuracy": float(accuracy_score(targets, predictions)), "macro_f1": float(f1_score(targets, predictions, average="macro"))}
+    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+    return {"mae": float(mean_absolute_error(targets, predictions)), "rmse": float(mean_squared_error(targets, predictions) ** 0.5), "r2": float(r2_score(targets, predictions))}
 
 
 def _create_estimator(capability_id: str, task: str, random_state: int, options: dict[str, Any]) -> Any:
